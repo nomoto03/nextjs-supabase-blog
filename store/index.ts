@@ -1,6 +1,5 @@
 // Zstand Reactの状態管理ライブラリ
 // https://github.com/pmnrds/zustand
-import { type } from "os";
 import { create } from "zustand";
 
 type User = {
