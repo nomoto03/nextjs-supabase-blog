@@ -4,6 +4,7 @@ create table blogs (
   user_id uuid references auth.users not null,
   title text not null,
   content text not null,
+  image_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
