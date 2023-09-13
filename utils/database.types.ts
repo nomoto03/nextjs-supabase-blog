@@ -39,6 +39,7 @@ export interface Database {
           content: string
           created_at: string
           id: string
+          image_url: string
           title: string
           user_id: string
         }
@@ -46,6 +47,7 @@ export interface Database {
           content: string
           created_at?: string
           id?: string
+          image_url?: string
           title: string
           user_id: string
         }
@@ -53,6 +55,7 @@ export interface Database {
           content?: string
           created_at?: string
           id?: string
+          image_url?: string
           title?: string
           user_id?: string
         }
