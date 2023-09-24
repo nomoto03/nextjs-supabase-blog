@@ -56,7 +56,7 @@ const BlogDetail = ({blog}: PageProps) => {
             <Loading />
           ) : (
             <div className='flex items-center space-x-5'>
-              <Link href={`blog/${blog.id}/edit`}>編集</Link>
+              <Link href={`${blog.id}/edit`}>編集</Link>
               <div className='cursor-pointer' onClick={() => deleteBlog()}>
                 削除
               </div>
