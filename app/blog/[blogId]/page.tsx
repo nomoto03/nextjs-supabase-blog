@@ -1,8 +1,8 @@
 import BlogDetail from "@/app/components/blog/blog-detail"
 import { BlogListType } from "@/utils/blog.types"
+
 import { createClient } from "@/utils/spabase-server"
 import { notFound } from "next/navigation"
-
 
 type PageProps = {
   params: {
@@ -11,26 +11,33 @@ type PageProps = {
 }
 
 // ブログ詳細
-const BlogDetailPage = async ({params}: PageProps) => {
+const BlogDetailPage = async ({ params }: PageProps) => {
   const supabase = createClient()
 
   // ブログ詳細取得
   const { data: blogData } = await supabase
     .from('blogs')
-    .select('*')
+    .select('*, comments(id, content, created_at, profiles(name, avatar_url), likes(user_id))') // コメント取得
     .eq('id', params.blogId)
+    .returns<BlogListType>() // 型を指定
     .single()
 
   // ブログが存在しない場合
   if (!blogData) return notFound()
 
-  // プロフィール情報取得
+  // 【Tips】
+  // blogsテーブルのuser_idをprofile_idに変更することで、ブログと同時にプロフィールも取得できるようになります。
+  // supabase.from('blogs').select(`id, created_at, title, content, image_url, profiles(name, avatar_url), comments(id, content, created_at, profiles(name, avatar_url), likes(user_id))`).eq('id', params.blogId).returns<BlogListType>().single()
+  // こうすることで、別にプロフィールを取得する必要がなくなります。
+  // 試してみてください。
+
+  // プロフィール取得
   const { data: profileData } = await supabase
     .from('profiles')
     .select()
     .eq('id', blogData.user_id)
     .single()
-  
+
   // 表示ブログ詳細作成
   const blog: BlogListType = {
     id: blogData.id,
@@ -41,6 +48,7 @@ const BlogDetailPage = async ({params}: PageProps) => {
     user_id: blogData.user_id,
     name: profileData!.name,
     avatar_url: profileData!.avatar_url,
+    comments: blogData.comments,
   }
 
   return <BlogDetail blog={blog} />
