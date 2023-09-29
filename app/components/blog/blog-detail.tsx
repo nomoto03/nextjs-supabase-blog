@@ -1,6 +1,6 @@
 "use client";
 
-import { BlogListType } from "@/utils/blog.types";
+import { BlogListType, LikeType, CommentType } from "@/utils/blog.types";
 import React, { useEffect, useState, useRef, FormEvent } from "react";
 import { useSupabase } from "../supabase-provider";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import Loading from "@/app/loading";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
+import { HeartIcon } from "@heroicons/react/24/solid";
 
 type PageProps = {
   blog: BlogListType;
@@ -24,6 +25,7 @@ const BlogDetail = ({ blog }: PageProps) => {
   const [login, setLogin] = useState(false);
   const [loadingComment, setLoadingComment] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null!);
+  const [loadingLike, setLoadingLike] = useState('');
 
   useEffect(() => {
     // ログインチェック
@@ -99,6 +101,27 @@ const BlogDetail = ({ blog }: PageProps) => {
     return 0;
   });
 
+  // いいねボタンクリック
+  const commentLike = async (comment_id: string, handle: boolean) => {
+    setLoadingLike(comment_id)
+
+    if (handle) {
+      // いいねを新規作成
+      await supabase.from('likes').insert({
+        user_id: user.id!,
+        comment_id,
+      })
+    } else {
+      // いいねを削除
+      await supabase.from('likes').delete().match({ user_id: user.id, comment_id: comment_id })
+    }
+
+    // キャッシュをクリア
+    router.refresh()
+
+    setLoadingLike('')
+  }
+
   const renderButton = () => {
     if (myBlog) {
       return (
@@ -117,6 +140,43 @@ const BlogDetail = ({ blog }: PageProps) => {
       );
     }
   };
+
+  // いいねボタン表示
+  const renderLike = (data: CommentType) => {
+    // ログインチェック
+    if (login) {
+      // いいねしているユーザーをリスト化
+      const user_id_list = data.likes.map((x) => x.user_id)
+
+      if (loadingLike == data.id) {
+        // ローディング
+        return (
+          <div className="h-4 w-4 animate-spin rounded-full border border-yellow-500 border-t-transparent"></div>
+        )
+      } else if (user_id_list.includes(user.id!)) {
+        // いいね済み
+        return (
+          <div className="text-pink-500 cursor-pointer" onClick={() => commentLike(data.id, false)}>
+            <HeartIcon className="h-5 w-5" />
+          </div>
+        )
+      } else {
+        // いいね無し
+        return (
+          <div className="text-gray-400 cursor-pointer" onClick={() => commentLike(data.id, true)}>
+            <HeartIcon className="h-5 w-5" />
+          </div>
+        )
+      }
+    } else {
+      // 初期値
+      return (
+        <div className="text-gray-400">
+          <HeartIcon className="h-5 w-5" />
+        </div>
+      )
+    }
+  }
 
   return (
     <div className="max-w-screen-md mx-auto">
@@ -217,6 +277,13 @@ const BlogDetail = ({ blog }: PageProps) => {
             </div>
             <div className="leading-relaxed break-words whitespace-pre-wrap p-3">
               {data.content}
+            </div>
+
+            <div className="flex items-center justify-end px-3 mb-3">
+              <div className="flex items-center space-x-1">
+                {renderLike(data)}
+                <div>{data.likes.length}</div>
+              </div>
             </div>
           </div>
         ))}
